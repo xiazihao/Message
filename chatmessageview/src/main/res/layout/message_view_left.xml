@@ -36,7 +36,7 @@
             android:maxWidth="200dp"
             android:padding="5dp"
             android:textSize="13sp"
-            tools:text="Provides APIs that let you interact directly with connected cameras and other devices, using the PTP (Picture Transfer Protocol) subset of the "/>
+            android:text="Provides APIs that let you interact directly with connected cameras and other devices, using the PTP (Picture Transfer Protocol) subset of the "/>
 
         <TextView
             android:id="@+id/message_time"
