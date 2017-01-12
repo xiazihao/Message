@@ -1,87 +1,70 @@
 package com.xiazihao.android.message;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
-import com.xiazihao.android.chatmessageview.Message;
+import com.xiazihao.android.chatmessageview.MessageDataBaseHelper;
+import com.xiazihao.android.chatmessageview.MessageView;
 import com.xiazihao.android.chatmessageview.MessageConversationDB;
+
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
     private Button mLeftButton;
     private Button mRightButton;
+    private MessageDataBaseHelper mDB;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Message message = (Message) findViewById(R.id.view);
-        message.setConversations(new MessageConversationDB() {
-            private String[] mDate = {"1:00", "2:00", "3:00", "4:00", "5:00"};
-            private String[] mConversations = {"xia", "ega", "geage", "geag", "zi"};
-
-            public String getName(int position) {
-                return null;
-            }
-
+        final MessageView messageView = (MessageView) findViewById(R.id.view);
+        mDB = new MessageDataBaseHelper(this, "test.db", null, 1) {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public Drawable getImage(int position) {
-                if (position % 2 == 0) {
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        return getDrawable(R.drawable.face_2);
-                    } else {
-                        return getResources().getDrawable(R.drawable.face_2);
-                    }
-                }else{
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        return getDrawable(R.drawable.face_1);
-                    } else {
-                        return getResources().getDrawable(R.drawable.face_1);
-                    }
+                switch (getType(position)) {
+                    case LEFT:
+                        return MainActivity.this.getDrawable(R.drawable.face_1);
+                    case RIGHT:
+                        return MainActivity.this.getDrawable(R.drawable.face_2);
                 }
+                return MainActivity.this.getDrawable(R.drawable.face_2);
             }
+        };
 
-            @Override
-            public int getType(int postion) {
-                if (postion % 2 == 0) {
-                    return LEFT;
-                } else {
-                    return RIGHT;
-                }
-            }
-
-            @Override
-            public int size() {
-                return mDate.length;
-            }
-
-            @Override
-            public String getDialogTime(int position) {
-                return mDate[position];
-            }
-
-            @Override
-            public String getDialogMessage(int position) {
-                return mConversations[position];
-            }
-        });
         mLeftButton = (Button) findViewById(R.id.left_button);
         mLeftButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Date date = new Date();
+                mDB.newMessage("test" + date.toString(), "xiazihao", date, MessageConversationDB.LEFT);
+                RecyclerView.Adapter adapter = messageView.getAdapter();
+                adapter.notifyItemInserted(adapter.getItemCount());
+                messageView.smoothScrollToPosition(messageView.getAdapter().getItemCount());
             }
         });
         mRightButton = (Button) findViewById(R.id.right_button);
         mRightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Date date = new Date();
+                mDB.newMessage("test" + date.toString(), "xiazihao", date, MessageConversationDB.RIGHT);
+                RecyclerView.Adapter adapter = messageView.getAdapter();
+                adapter.notifyItemInserted(adapter.getItemCount());
+                messageView.smoothScrollToPosition(messageView.getAdapter().getItemCount());
             }
         });
+        messageView.setConversations(mDB);
     }
 }

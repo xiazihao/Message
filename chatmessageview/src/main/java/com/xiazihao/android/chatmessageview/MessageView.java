@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +18,7 @@ import android.widget.TextView;
  * Created by xiazihao on 2017/1/11.
  */
 
-public class Message extends RecyclerView {
+public class MessageView extends RecyclerView {
     private static final int TIMEVIEW = 2;
 
     public void setConversations(MessageConversationDB conversations) {
@@ -30,27 +31,28 @@ public class Message extends RecyclerView {
 
     private MessageConversationDB mConversations;
 
-    public Message(Context context) {
+    public MessageView(Context context) {
         super(context);
         init(context);
     }
 
-    public Message(Context context, @Nullable AttributeSet attrs) {
+    public MessageView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public Message(Context context, @Nullable AttributeSet attrs, int defStyle) {
+    public MessageView(Context context, @Nullable AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(context);
 
     }
 
     private void init(Context context) {
-        this.setLayoutManager(new LinearLayoutManager(context));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+        this.setLayoutManager(layoutManager);
         if(mConversations != null){
             this.setAdapter(new MessageAdapter());
-            this.smoothScrollToPosition(this.getAdapter().getItemCount());
+            this.scrollToPosition(this.getAdapter().getItemCount());
         }
 
 

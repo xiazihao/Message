@@ -8,12 +8,12 @@
     android:orientation="vertical"
     tools:context="com.xiazihao.android.message.MainActivity">
 
-    <com.xiazihao.android.chatmessageview.Message
+    <com.xiazihao.android.chatmessageview.MessageView
         android:id="@+id/view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1">
-    </com.xiazihao.android.chatmessageview.Message>
+    </com.xiazihao.android.chatmessageview.MessageView>
 
     <LinearLayout
         android:layout_width="match_parent"
