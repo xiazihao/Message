@@ -7,8 +7,12 @@ import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,10 +39,13 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
     }
 
     private List<MessageInfo> mMessageInfos = new ArrayList<>();
-    private String mDbName;
     private static final String mTableName = "message";
     private SQLiteDatabase mDatabase;
-    private Context mContext;
+    private Handler mDbHandler;
+    private static final int INSERT_TASK = 0;
+    private static final int OPEN_TASK = 1;
+
+    private HandlerThread mThread = new HandlerThread("database thread");
 
     @Override
     public void onOpen(SQLiteDatabase db) {
@@ -59,31 +66,51 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
 
     public MessageDataBaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
         super(context, name, factory, version);
-        mDbName = name;
-        mContext = context;
-        mDatabase = this.getWritableDatabase();
+        init(name);
     }
 
     public MessageDataBaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version, DatabaseErrorHandler errorHandler) {
         super(context, name, factory, version, errorHandler);
-        mDbName = name;
-        mContext = context;
+        init(name);
+    }
+
+    private void init(String name) {
         mDatabase = this.getWritableDatabase();
+        mThread.start();
+        mDbHandler = new Handler(mThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case INSERT_TASK:
+                        MessageInfo messageInfo = (MessageInfo) msg.obj;
+                        ContentValues values = new ContentValues();
+                        values.put(Schema.DATE, messageInfo.mTime.getTime());
+                        values.put(Schema.TEXT, messageInfo.mText);
+                        values.put(Schema.TYPE, messageInfo.mType);
+                        values.put(Schema.USER, messageInfo.mUser);
+                        mDatabase.insert(mTableName, null, values);
+                        Log.i("message", "Insert task");
+                    case OPEN_TASK:
+                        Log.i("message", "open task");
+                }
+            }
+        };
     }
 
     public void newMessage(String text, String user, Date date, int type) {
-        ContentValues values = new ContentValues();
-        values.put(Schema.DATE, date.getTime());
-        values.put(Schema.TEXT, text);
-        values.put(Schema.TYPE, type);
-        values.put(Schema.USER, user);
+//        ContentValues values = new ContentValues();
+//        values.put(Schema.DATE, date.getTime());
+//        values.put(Schema.TEXT, text);
+//        values.put(Schema.TYPE, type);
+//        values.put(Schema.USER, user);
         MessageInfo messageInfo = new MessageInfo();
         messageInfo.mType = type;
         messageInfo.mUser = user;
         messageInfo.mText = text;
         messageInfo.mTime = date;
         mMessageInfos.add(messageInfo);
-        mDatabase.insert(mTableName, null, values);
+        Message message = Message.obtain(mDbHandler, INSERT_TASK, messageInfo);
+        mDbHandler.sendMessage(message);
     }
 
     @Override
