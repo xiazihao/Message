@@ -1,13 +1,11 @@
 package com.xiazihao.android.chatmessageview;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,14 +17,26 @@ import android.widget.TextView;
  */
 
 public class MessageView extends RecyclerView {
+
     private static final int TIMEVIEW = 2;
 
     public void setConversations(MessageConversationDB conversations) {
         mConversations = conversations;
-        if(this.getAdapter() == null){
+        if (this.getAdapter() == null) {
             this.setAdapter(new MessageAdapter());
             this.smoothScrollToPosition(this.getAdapter().getItemCount());
         }
+    }
+
+    private IconClick mMessageIconClick = new IconClick() {
+        @Override
+        public void onClick(View view, int position) {
+
+        }
+    };
+
+    public void setMessageIconClick(IconClick messageIconClick) {
+        mMessageIconClick = messageIconClick;
     }
 
     private MessageConversationDB mConversations;
@@ -50,11 +60,10 @@ public class MessageView extends RecyclerView {
     private void init(Context context) {
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         this.setLayoutManager(layoutManager);
-        if(mConversations != null){
+        if (mConversations != null) {
             this.setAdapter(new MessageAdapter());
             this.scrollToPosition(this.getAdapter().getItemCount());
         }
-
 
     }
 
@@ -83,10 +92,12 @@ public class MessageView extends RecyclerView {
 
         @Override
         public void onBindViewHolder(MessageHolder holder, int position) {
-           holder.setImage( mConversations.getImage(position));
+            holder.setImage(mConversations.getImage(position));
             holder.setName(mConversations.getName(position));
             holder.setText(mConversations.getDialogMessage(position));
             holder.setTime(mConversations.getDialogTime(position));
+                holder.setOnClickListener(mMessageIconClick, position);
+
         }
 
         @Override
@@ -109,17 +120,30 @@ public class MessageView extends RecyclerView {
             mText = (TextView) itemView.findViewById(R.id.message_text);
             mTime = (TextView) itemView.findViewById(R.id.message_time);
         }
-        public void setImage(Drawable image){
+
+        public void setImage(Drawable image) {
             mImageView.setImageDrawable(image);
         }
-        public void setName(String name){
+
+        public void setName(String name) {
             mName.setText(name);
         }
-        public void setText(String text){
+
+        public void setText(String text) {
             mText.setText(text);
         }
-        public void setTime(String time){
+
+        public void setTime(String time) {
             mTime.setText(time);
+        }
+
+        public void setOnClickListener(final IconClick messageIconClick, final int position) {
+            mImageView.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    messageIconClick.onClick(view, position);
+                }
+            });
         }
     }
 }

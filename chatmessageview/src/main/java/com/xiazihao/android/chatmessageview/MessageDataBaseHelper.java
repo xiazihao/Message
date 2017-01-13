@@ -12,7 +12,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.text.format.DateFormat;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,10 +33,11 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
     public class MessageInfo {
         private String mText;
         private int mType;
-        private Date mTime;
+        private Date mDate;
         private String mUser;
 
     }
+
 
     private List<MessageInfo> mMessageInfos = new ArrayList<>();
     private static final String mTableName = "message";
@@ -47,6 +48,7 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
 
     private HandlerThread mThread = new HandlerThread("database thread");
 
+
     @Override
     public void onOpen(SQLiteDatabase db) {
         super.onOpen(db);
@@ -55,7 +57,7 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
         while (!cursor.isAfterLast()) {
             MessageInfo newInfo = new MessageInfo();
             newInfo.mText = cursor.getString(cursor.getColumnIndex(Schema.TEXT));
-            newInfo.mTime = new Date(cursor.getLong(cursor.getColumnIndex(Schema.DATE)));
+            newInfo.mDate = new Date(cursor.getLong(cursor.getColumnIndex(Schema.DATE)));
             newInfo.mType = cursor.getInt(cursor.getColumnIndex(Schema.TYPE));
             newInfo.mUser = cursor.getString(cursor.getColumnIndex(Schema.USER));
             mMessageInfos.add(newInfo);
@@ -84,30 +86,23 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
                     case INSERT_TASK:
                         MessageInfo messageInfo = (MessageInfo) msg.obj;
                         ContentValues values = new ContentValues();
-                        values.put(Schema.DATE, messageInfo.mTime.getTime());
+                        values.put(Schema.DATE, messageInfo.mDate.getTime());
                         values.put(Schema.TEXT, messageInfo.mText);
                         values.put(Schema.TYPE, messageInfo.mType);
                         values.put(Schema.USER, messageInfo.mUser);
                         mDatabase.insert(mTableName, null, values);
-                        Log.i("message", "Insert task");
                     case OPEN_TASK:
-                        Log.i("message", "open task");
                 }
             }
         };
     }
 
     public void newMessage(String text, String user, Date date, int type) {
-//        ContentValues values = new ContentValues();
-//        values.put(Schema.DATE, date.getTime());
-//        values.put(Schema.TEXT, text);
-//        values.put(Schema.TYPE, type);
-//        values.put(Schema.USER, user);
         MessageInfo messageInfo = new MessageInfo();
         messageInfo.mType = type;
         messageInfo.mUser = user;
         messageInfo.mText = text;
-        messageInfo.mTime = date;
+        messageInfo.mDate = date;
         mMessageInfos.add(messageInfo);
         Message message = Message.obtain(mDbHandler, INSERT_TASK, messageInfo);
         mDbHandler.sendMessage(message);
@@ -152,7 +147,7 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
     @Override
     public String getDialogTime(int position) {
         String fomate = "MMM d E H:m:s";
-        return DateFormat.format(fomate, mMessageInfos.get(position).mTime).toString();
+        return DateFormat.format(fomate, mMessageInfos.get(position).mDate).toString();
     }
 
     @Override

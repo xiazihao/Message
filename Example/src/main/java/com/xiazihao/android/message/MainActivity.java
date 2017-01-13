@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.xiazihao.android.chatmessageview.IconClick;
 import com.xiazihao.android.chatmessageview.MessageDataBaseHelper;
 import com.xiazihao.android.chatmessageview.MessageView;
 import com.xiazihao.android.chatmessageview.MessageConversationDB;
@@ -66,5 +67,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         messageView.setConversations(mDB);
+        messageView.setMessageIconClick(new IconClick() {
+            @Override
+            public void onClick(View view, int position) {
+                Toast.makeText(MainActivity.this,"icon on click " + position,Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
