@@ -18,6 +18,7 @@ import com.xiazihao.android.chatmessageview.MessageView;
 import com.xiazihao.android.chatmessageview.MessageConversationDB;
 
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -92,6 +93,12 @@ public class MainActivity extends AppCompatActivity {
         mUnselectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                List<Integer> list = messageView.getSelectDataset();
+                String temp = "";
+                for (int i : list) {
+                    temp += i;
+                }
+                Toast.makeText(MainActivity.this, temp, Toast.LENGTH_SHORT).show();
                 messageView.setOnSelectionMode(false);
             }
         });

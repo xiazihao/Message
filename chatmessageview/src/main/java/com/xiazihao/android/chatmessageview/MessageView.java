@@ -11,11 +11,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by xiazihao on 2017/1/11.
@@ -25,8 +28,13 @@ public class MessageView extends RecyclerView {
 
     private static final int TIMEVIEW = 2;
     private boolean mIsOnSelectionMode = false;
-    private HashMap<Long, Boolean> mSelectState = new HashMap<>();
+    private List<Integer> mSelectDataset;
 
+    /**
+     * Set message conversation database
+     *
+     * @param conversations The database object which must implement MessageConversationDB interface
+     */
     public void setConversations(MessageConversationDB conversations) {
         mConversations = conversations;
         if (this.getAdapter() == null) {
@@ -42,11 +50,31 @@ public class MessageView extends RecyclerView {
         }
     };
 
+    /**
+     * Set selection mode. In selection mode, each item has a checkbox
+     *
+     * @param onSelectionMode true, get into selection mode, fase, to end selection mode.
+     */
     public void setOnSelectionMode(boolean onSelectionMode) {
         mIsOnSelectionMode = onSelectionMode;
         getAdapter().notifyDataSetChanged();
+        mSelectDataset = null;
     }
 
+    /**
+     * Get select data set which you select in selection mode
+     *
+     * @return A list which contain the index of item you selected.
+     */
+    public List<Integer> getSelectDataset() {
+        return mSelectDataset;
+    }
+
+    /**
+     * Set message head icon click listener, which whill invoke when clicking the circle iamge view.
+     *
+     * @param messageIconClick The click listener object.
+     */
     public void setMessageIconClick(IconClick messageIconClick) {
         mMessageIconClick = messageIconClick;
     }
@@ -135,12 +163,18 @@ public class MessageView extends RecyclerView {
             mText = (TextView) itemView.findViewById(R.id.message_text);
             mTime = (TextView) itemView.findViewById(R.id.message_time);
             mCheckBox = (CheckBox) itemView.findViewById(R.id.message_checkbox);
+            mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton button, boolean b) {
+                    if (b) {
+                        mSelectDataset.add(getAdapterPosition());
+                    } else {
+                        mSelectDataset.remove((Integer) getAdapterPosition());
+                    }
+                }
+            });
             if (mIsOnSelectionMode) {
                 mCheckBox.setVisibility(View.VISIBLE);
-                if (!mSelectState.containsKey(getItemId())) {
-                    mSelectState.put(getItemId(), false);
-                }
-                mCheckBox.setChecked(mSelectState.get(getItemId()));
             } else {
                 mCheckBox.setVisibility(View.GONE);
             }
@@ -157,6 +191,10 @@ public class MessageView extends RecyclerView {
             } else {
                 mCheckBox.setVisibility(View.GONE);
             }
+            if (mSelectDataset == null) {
+                mSelectDataset = new ArrayList<>();
+            }
+            mCheckBox.setChecked(mSelectDataset.contains((Integer) getAdapterPosition()));
         }
 
 
@@ -179,9 +217,13 @@ public class MessageView extends RecyclerView {
         }
     }
 
+    /**
+     * Notify item removed, @note: You should remove database manually
+     *
+     * @param position The index of message item which you removed.
+     */
     public void notifyRemove(int position) {
         this.getAdapter().notifyItemRemoved(position);
-//        this.getAdapter().notifyDataSetChanged();
     }
 }
 
