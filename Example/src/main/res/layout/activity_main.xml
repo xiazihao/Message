@@ -25,13 +25,31 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="left"/>
+            android:text="Left"
+            android:textAllCaps="false"/>
+
+        <Button
+            android:id="@+id/select_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Select"
+            android:textAllCaps="false"/>
+
+        <Button
+            android:id="@+id/unselect_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Unselect"
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/right_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="right"/>
+            android:text="Right"
+            android:textAllCaps="false"/>
     </LinearLayout>
 </LinearLayout>

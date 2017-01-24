@@ -11,10 +11,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.text.format.DateFormat;
-import android.util.Log;
-import android.view.View;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -45,6 +44,7 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
     private Handler mDbHandler;
     private static final int INSERT_TASK = 0;
     private static final int OPEN_TASK = 1;
+    private static final int REMOVE_TASK = 2;
 
     private HandlerThread mThread = new HandlerThread("database thread");
 
@@ -82,16 +82,32 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
         mDbHandler = new Handler(mThread.getLooper()) {
             @Override
             public void handleMessage(Message msg) {
+                MessageInfo[] messageInfos;
                 switch (msg.what) {
                     case INSERT_TASK:
-                        MessageInfo messageInfo = (MessageInfo) msg.obj;
-                        ContentValues values = new ContentValues();
-                        values.put(Schema.DATE, messageInfo.mDate.getTime());
-                        values.put(Schema.TEXT, messageInfo.mText);
-                        values.put(Schema.TYPE, messageInfo.mType);
-                        values.put(Schema.USER, messageInfo.mUser);
-                        mDatabase.insert(mTableName, null, values);
+                        messageInfos = (MessageInfo[]) msg.obj;
+                        for (MessageInfo messageInfo : messageInfos) {
+                            ContentValues values = new ContentValues();
+                            values.put(Schema.DATE, messageInfo.mDate.getTime());
+                            values.put(Schema.TEXT, messageInfo.mText);
+                            values.put(Schema.TYPE, messageInfo.mType);
+                            values.put(Schema.USER, messageInfo.mUser);
+                            mDatabase.insert(mTableName, null, values);
+                        }
+                        break;
                     case OPEN_TASK:
+                        break;
+                    case REMOVE_TASK:
+                        messageInfos = (MessageInfo[]) msg.obj;
+                        mDatabase.beginTransaction();
+                        for (MessageInfo messageInfo : messageInfos) {
+                            messageInfo = messageInfos[0];
+                            mDatabase.delete(mTableName, Schema.TEXT + " =? and " + Schema.DATE + " =?", new String[]{messageInfo.mText, messageInfo.mDate.toString()});
+                            mDatabase.setTransactionSuccessful();
+                        }
+                        mDatabase.endTransaction();
+
+                        break;
                 }
             }
         };
@@ -104,7 +120,7 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
         messageInfo.mText = text;
         messageInfo.mDate = date;
         mMessageInfos.add(messageInfo);
-        Message message = Message.obtain(mDbHandler, INSERT_TASK, messageInfo);
+        Message message = Message.obtain(mDbHandler, INSERT_TASK, new MessageInfo[]{messageInfo});
         mDbHandler.sendMessage(message);
     }
 
@@ -144,14 +160,50 @@ public class MessageDataBaseHelper extends SQLiteOpenHelper implements MessageCo
         return mMessageInfos.size();
     }
 
+
     @Override
-    public String getDialogTime(int position) {
-        String fomate = "MMM d E H:m:s";
-        return DateFormat.format(fomate, mMessageInfos.get(position).mDate).toString();
+    public Date getDialogDate(int position) {
+        return mMessageInfos.get(position).mDate;
+    }
+
+    @Override
+    public String getDialogDateString(int position) {
+        String sameDayFormate = "H:m:s";
+        String sameWeekFormat = "d E H:m:s";
+        String sameYearFormat = "d E H:m:s";
+        String integerFormat = "MMM d E H:m:s";
+        String formate = "MMM d E H:m:s";
+        Calendar currentDate = Calendar.getInstance();
+        currentDate.setTime(new Date());
+        Calendar messageDate = Calendar.getInstance();
+        messageDate.setTime(mMessageInfos.get(position).mDate);
+        if (currentDate.get(Calendar.YEAR) == messageDate.get(Calendar.YEAR)) {
+            if (currentDate.get(Calendar.WEEK_OF_YEAR) == messageDate.get(Calendar.WEEK_OF_YEAR)) {
+                if (currentDate.get(Calendar.DAY_OF_YEAR) == messageDate.get(Calendar.DAY_OF_YEAR)) {
+                    formate = sameDayFormate;
+                } else {
+                    formate = sameWeekFormat;
+                }
+            } else {
+                formate = sameWeekFormat;
+            }
+        } else {
+            formate = integerFormat;
+        }
+        return DateFormat.format(formate, mMessageInfos.get(position).mDate).toString();
     }
 
     @Override
     public String getDialogMessage(int position) {
         return mMessageInfos.get(position).mText;
+    }
+
+    @Override
+    public void removeDialog(int position) {
+        MessageInfo messageInfo = mMessageInfos.get(position);
+        MessageInfo[] messageInfos = new MessageInfo[]{messageInfo};
+        Message message = Message.obtain(mDbHandler, REMOVE_TASK, messageInfos);
+        mDbHandler.sendMessage(message);
+        mMessageInfos.remove(position);
     }
 }
